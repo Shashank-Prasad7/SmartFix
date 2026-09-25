@@ -3,19 +3,23 @@ Maintains exact compatibility with official student_kit/schema.py
 and adds request/utility models.
 """
 from enum import Enum
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class BaseDeeplink(BaseModel):
+class OfficialModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class BaseDeeplink(OfficialModel):
     deeplink: str
 
 
 class Deeplink(BaseDeeplink):
     description: str
-    message: Optional[str] = ""
-    classes: Optional[Dict[str, str]] = None
-    originalType: Optional[str] = None
+    message: str | None = ""
+    classes: dict[str, str] | None = None
+    originalType: str | None = None
 
 
 class Condition(str, Enum):
@@ -39,53 +43,53 @@ class actionCategory(str, Enum):
 
 class ValidationDeepLink(BaseDeeplink):
     key: str
-    resultType: Optional[ResultTypes] = None
-    condition: Optional[Condition] = None
-    value: Optional[str] = None
+    resultType: ResultTypes | None = None
+    condition: Condition | None = None
+    value: str | None = None
 
 
-class StepGroup(BaseModel):
-    steps: List[str]
-    validationDeeplink: Optional[ValidationDeepLink] = None
-    actionableDeeplink: Optional[Deeplink] = None
+class StepGroup(OfficialModel):
+    steps: list[str]
+    validationDeeplink: ValidationDeepLink | None = None
+    actionableDeeplink: Deeplink | None = None
 
 
-class Action(BaseModel):
+class Action(OfficialModel):
     actionName: str
     description: str
-    stepGroups: List[StepGroup]
-    category: Optional[actionCategory] = actionCategory.manual
+    stepGroups: list[StepGroup]
+    category: actionCategory | None = actionCategory.manual
 
 
-class Goal(BaseModel):
+class Goal(OfficialModel):
     goal: str
     title: str
-    actions: List[Action]
+    actions: list[Action]
     score: float
 
 
-class ContextDeeplinkResponse(BaseModel):
+class ContextDeeplinkResponse(OfficialModel):
     """RAG response containing a list of Goal objects."""
-    contexts: List[Goal] = Field(default_factory=list)
+    contexts: list[Goal] = Field(default_factory=list)
 
 
 # --- Request and Submission Models ---
 
-class SIISPayload(BaseModel):
+class SIISPayload(OfficialModel):
     title: str
     content: str
 
 
-class TroubleshootRequest(BaseModel):
+class TroubleshootRequest(OfficialModel):
     query: str
     siis_response: SIISPayload
 
 
 class PreviewRequest(TroubleshootRequest):
-    facts: Optional[Dict[str, Optional[bool]]] = None
+    facts: dict[str, bool | None] | None = None
 
 
-class ResultItem(BaseModel):
+class ResultItem(OfficialModel):
     query: str
-    query_variations: List[str]
+    query_variations: list[str]
     response: ContextDeeplinkResponse

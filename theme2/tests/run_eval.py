@@ -1,175 +1,139 @@
-"""Evaluation and Offline Results Generator for Theme 2.
-Processes all 20 canonical queries from student_kit/siis_responses.json,
-generates 9 unique variations per query (Block A5), validates all scoring gates,
-and produces the official submission file: theme2/submission/results.jsonl.
+"""Offline official-input contract evaluation and submission export.
+
+This verifies executable gates only. Semantic fidelity and live latency require
+the independent annotations and public-endpoint protocol in EVAL.md.
 """
+
+from __future__ import annotations
+
+import hashlib
 import json
 import os
+import platform
 import re
+import runpy
 import sys
 import time
-from typing import List
+import uuid
+from pathlib import Path
 
+from theme2.src.cache import DISK_LIMIT, HOT_LIMIT, PIPELINE_VERSION
 from theme2.src.pipeline import TroubleshootingPipeline
-from theme2.src.sanitizer import GOAL_REGEX
-from theme2.src.schema import (
-    ContextDeeplinkResponse,
-    SIISPayload,
-    actionCategory,
-)
+from theme2.src.sanitizer import validate_response
+from theme2.src.schema import ContextDeeplinkResponse, SIISPayload
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "data" / "official" / "student_kit" / "siis_responses.json"
+OUTPUT = ROOT / "submission" / "results.jsonl"
+OFFICIAL_MODEL = runpy.run_path(str(ROOT / "data" / "official" / "student_kit" / "schema.py"))["ContextDeeplinkResponse"]
 
 
-def generate_paraphrases(query: str) -> List[str]:
-    """Generates 9 diverse paraphrases for a troubleshooting query across different styles."""
-    q_clean = re.sub(r'^\d+\.\s*', '', query).strip()
-    q_clean = re.sub(r'^"(.*)"$', r'\1', q_clean)
-
-    variations = [
-        f"How do I fix when {q_clean.lower()}?",
-        f"Troubleshooting steps for: {q_clean}",
-        f"My Samsung device has an issue: {q_clean}",
-        f"Why is it that {q_clean.lower()}?",
-        f"Can you guide me on resolving: {q_clean}",
-        f"Steps to resolve problem: {q_clean}",
-        f"Need assistance because {q_clean.lower()}",
-        f"Galaxy troubleshooting help needed for {q_clean}",
-        f"What should I do if {q_clean.lower()}?",
+def generate_paraphrases(query: str) -> list[str]:
+    clean = re.sub(r"^\s*\d+[.)]\s*", "", query).strip().strip('"').rstrip(".?! ")
+    return [
+        f"How can I resolve this issue: {clean}?",
+        f"Please walk me through fixing this: {clean}.",
+        f"What troubleshooting steps apply when {clean.lower()}?",
+        f"I need help with the following Samsung device problem: {clean}.",
+        f"Which checks should I perform for this symptom: {clean}?",
+        f"Can you explain a safe way to address this: {clean}?",
+        f"My device has this problem: {clean}. What should I check first?",
+        f"Give me guided steps for this situation: {clean}.",
+        f"How do I diagnose and handle this: {clean}?",
     ]
-    return variations
 
 
-def run_evaluation():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    siis_file = os.path.join(base_dir, "data", "student_kit", "siis_responses.json")
-    submission_dir = os.path.join(base_dir, "submission")
-    os.makedirs(submission_dir, exist_ok=True)
-    out_file = os.path.join(submission_dir, "results.jsonl")
-
-    if not os.path.exists(siis_file):
-        print(f"Error: {siis_file} not found!")
-        sys.exit(1)
-
-    with open(siis_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    responses = data.get("responses", [])
-    print(f"=== Starting Evaluation on {len(responses)} Queries ===")
-
+def run_evaluation() -> int:
+    if os.getenv("PRISM_LLM_MODE", "local").strip().lower() != "local":
+        print("Offline contract export requires PRISM_LLM_MODE=local; hosted results need the live evaluation protocol.")
+        return 2
+    data = json.loads(SOURCE.read_text(encoding="utf-8"))
+    rows = data["responses"]
+    run_id = f"offline-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}"
+    os.environ["PRISM_CACHE_DB_PATH"] = str(ROOT / ".runtime" / f"{run_id}.sqlite3")
     pipeline = TroubleshootingPipeline.get_instance()
-    results = []
-
-    passed_g4 = 0
-    passed_g5 = 0
-    passed_a1_goal = 0
-    passed_a1_title = 0
-    passed_a1_desc = 0
-    passed_a2_auto = 0
-    passed_a5_variations = 0
-
-    total_queries = len(responses)
-    start_eval_time = time.perf_counter()
-
-    for idx, item in enumerate(responses):
-        orig_q = item.get("original_query", "").strip()
-        siis_raw = item.get("siis_response", {})
-        title = siis_raw.get("title", "")
-        content = siis_raw.get("content", "")
-
-        payload = SIISPayload(title=title, content=content)
-
-        # Run pipeline
+    results: list[dict[str, object]] = []
+    observations: list[dict[str, object]] = []
+    failures: list[str] = []
+    started = time.perf_counter()
+    print(f"OFFLINE CONTRACT EVAL: {len(rows)} official queries")
+    for index, row in enumerate(rows, 1):
+        query = row["original_query"]
+        payload = SIISPayload.model_validate(row["siis_response"])
+        variations = generate_paraphrases(query)
         t0 = time.perf_counter()
-        resp, meta = pipeline.process(orig_q, payload)
-        dur_ms = (time.perf_counter() - t0) * 1000
-
-        # Generate 9 query variations (satisfies 8-10 rule)
-        variations = generate_paraphrases(orig_q)
-        if 8 <= len(variations) <= 10:
-            passed_a5_variations += 1
-
-        # Check Schema Validity (G4)
-        is_schema_valid = False
         try:
-            ContextDeeplinkResponse.model_validate(resp)
-            is_schema_valid = True
-            passed_g4 += 1
-        except Exception:
-            pass
+            response, metadata = pipeline.process(query, payload)
+            ContextDeeplinkResponse.model_validate(response.model_dump())
+            OFFICIAL_MODEL.model_validate(response.model_dump())
+            validate_response(response)
+            pipeline.resolver.validate_response_links(response)
+            if len(variations) != 9 or len({item.casefold() for item in variations}) != 9:
+                raise ValueError("Variations are not nine unique strings")
+            result = {"query": query, "query_variations": variations, "response": response.model_dump()}
+            results.append(result)
+            outcome = "PASS"
+            contexts = len(response.contexts)
+            actions = sum(len(goal.actions) for goal in response.contexts)
+            cache_status = metadata["X-Cache-Status"]
+        except (ValueError, OSError, TimeoutError) as exc:
+            outcome = "FAIL"
+            contexts = actions = 0
+            cache_status = "none"
+            failures.append(f"row {index}: {type(exc).__name__}: {exc}")
+        duration_ms = (time.perf_counter() - t0) * 1000
+        observations.append({"row": index, "outcome": outcome, "contexts": contexts, "actions": actions, "cache_status": cache_status, "duration_ms": round(duration_ms, 2)})
+        print(f"{index:02d}/{len(rows):02d} {outcome} contexts={contexts} actions={actions} cache={cache_status} time={duration_ms:.2f}ms")
 
-        # Check Zero URL Leaks (G5)
-        resp_json_str = resp.model_dump_json()
-        has_url_leak = any(
-            frag in resp_json_str
-            for frag in ["http://", "https://", "www.", ".com", "<a ", "<img", "!["]
-        )
-        if not has_url_leak:
-            passed_g5 += 1
-
-        # Check A1: Goal Regex, Title Word Count, Description Format
-        goal_ok = True
-        title_ok = True
-        desc_ok = True
-        auto_ok = True
-
-        for g in resp.contexts:
-            if not GOAL_REGEX.match(g.goal):
-                goal_ok = False
-            tw = g.title.split()
-            if not (2 <= len(tw) <= 3):
-                title_ok = False
-
-            for act in g.actions:
-                dw = act.description.split()
-                if not (act.description.startswith("It will ") and 5 <= len(dw) <= 7):
-                    desc_ok = False
-
-                for sg in act.stepGroups:
-                    if act.category == actionCategory.auto and not sg.actionableDeeplink:
-                        auto_ok = False
-
-        if goal_ok:
-            passed_a1_goal += 1
-        if title_ok:
-            passed_a1_title += 1
-        if desc_ok:
-            passed_a1_desc += 1
-        if auto_ok:
-            passed_a2_auto += 1
-
-        print(
-            f"Query {idx+1:02d}/{total_queries:02d} | Time: {dur_ms:6.2f}ms | Status: {meta.get('X-Cache-Status'):12s} | Schema: {'OK' if is_schema_valid else 'FAIL'} | URLs: {'CLEAN' if not has_url_leak else 'LEAK'}"
-        )
-
-        results.append({
-            "query": orig_q,
-            "query_variations": variations,
-            "response": resp.model_dump()
-        })
-
-    total_eval_ms = (time.perf_counter() - start_eval_time) * 1000
-
-    # Write results.jsonl
-    with open(out_file, "w", encoding="utf-8") as f:
-        for r in results:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
-
-    print("\n" + "=" * 50)
-    print("=== FINAL EVALUATION & SCORING SUMMARY ===")
-    print("=" * 50)
-    print(f"Total Queries Processed: {total_queries}")
-    print(f"Total Time: {total_eval_ms:.2f}ms (Avg {total_eval_ms/total_queries:.2f}ms/query)")
-    print(f"G3 Query Coverage:      {len(results)}/{total_queries} (100.0%) -> PASS (Req: >=95%)")
-    print(f"G4 Schema Validity:     {passed_g4}/{total_queries} ({passed_g4/total_queries*100:.1f}%) -> PASS (Req: >=90%)")
-    print(f"G5 Zero URL Leaks:      {passed_g5}/{total_queries} ({passed_g5/total_queries*100:.1f}%) -> PASS (Req: 100%)")
-    print(f"A1 Goal Regex:          {passed_a1_goal}/{total_queries} ({passed_a1_goal/total_queries*100:.1f}%)")
-    print(f"A1 Title Words (2-3):   {passed_a1_title}/{total_queries} ({passed_a1_title/total_queries*100:.1f}%)")
-    print(f"A1 Desc 'It will' (5-7):{passed_a1_desc}/{total_queries} ({passed_a1_desc/total_queries*100:.1f}%)")
-    print(f"A2 Auto Action Links:   {passed_a2_auto}/{total_queries} ({passed_a2_auto/total_queries*100:.1f}%)")
-    print(f"A5 Query Variations:    {passed_a5_variations}/{total_queries} ({passed_a5_variations/total_queries*100:.1f}%)")
-    print(f"\nSubmission File Generated: {out_file}")
-    print(f"File Size: {os.path.getsize(out_file):,} bytes")
-    print("=" * 50)
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    if not failures:
+        temporary = OUTPUT.with_suffix(".jsonl.tmp")
+        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+            for result in results:
+                stream.write(json.dumps(result, ensure_ascii=False) + "\n")
+        catalog = json.loads((ROOT / "data" / "official" / "student_kit" / "deeplinks.json").read_text(encoding="utf-8"))["deeplinks"]
+        approved_uris = {entry["deeplink"] for entry in catalog}
+        approved_uris.add("bixby://dummy_positive")
+        exported = [json.loads(line) for line in temporary.read_text(encoding="utf-8").splitlines()]
+        if len(exported) != len(rows):
+            raise ValueError("Submission export row count changed")
+        for source_row, exported_row in zip(rows, exported, strict=True):
+            if exported_row["query"] != source_row["original_query"] or len(exported_row["query_variations"]) != 9:
+                raise ValueError("Submission export query or variation mismatch")
+            response = ContextDeeplinkResponse.model_validate(exported_row["response"])
+            OFFICIAL_MODEL.model_validate(exported_row["response"])
+            validate_response(response)
+            pipeline.resolver.validate_response_links(response)
+            for goal in response.contexts:
+                for action in goal.actions:
+                    for group in action.stepGroups:
+                        if group.actionableDeeplink and group.actionableDeeplink.deeplink not in approved_uris:
+                            raise ValueError("Submission contains unapproved actionable URI")
+        temporary.replace(OUTPUT)
+    run_dir = ROOT / "reports" / run_id
+    run_dir.mkdir(parents=True, exist_ok=False)
+    (run_dir / "observations.jsonl").write_text("".join(json.dumps(item) + "\n" for item in observations), encoding="utf-8")
+    metrics = {
+        "dataset": "official-20", "total": len(rows), "passed": len(results), "failed": len(failures),
+        "elapsed_ms": round((time.perf_counter() - started) * 1000, 2),
+        "failures": failures,
+        "scope": "offline executable contract and coverage checks only; semantic accuracy and public latency not measured",
+    }
+    (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    manifest = {
+        "run_id": run_id, "dataset_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
+        "catalog_sha256": pipeline.resolver.catalog_digest, "pipeline_version": PIPELINE_VERSION,
+        "output_policy": "full-source", "mode": "deterministic offline",
+        "model_ids": None, "provider_calls": 0, "cost": None,
+        "python": platform.python_version(), "cache_hot_limit": HOT_LIMIT,
+        "cache_disk_limit_per_table": DISK_LIMIT, "cache_database": Path(os.environ["PRISM_CACHE_DB_PATH"]).name,
+        "paraphrase_policy": "nine deterministic generated variants per query; human review pending",
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"SUMMARY: {len(results)}/{len(rows)} passed; {len(failures)} failed; export={OUTPUT if not failures else 'not written'}")
+    print(f"EVIDENCE: {run_dir}")
+    return 0 if not failures else 1
 
 
 if __name__ == "__main__":
-    run_evaluation()
+    sys.exit(run_evaluation())

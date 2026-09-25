@@ -1,0 +1,125 @@
+{
+  "manifest_version": 1,
+  "imported_at_utc": "2026-09-20T19:41:02.6960073Z",
+  "paths_relative_to": "theme2/data/official",
+  "source_location": "Parent of theme2 at import time; original filenames retained as provenance only",
+  "copy_policy": "Byte-preserving copies; no originals changed; extraction limited to Theme 2 entries",
+  "files": [
+    {
+      "path": "documents/Samsung PRISM_Y2026_GenAI_Hackathon_3rd_Edition.V2(2).pdf",
+      "origin": {
+        "kind": "original-file",
+        "parent_filename": "Samsung PRISM_Y2026_GenAI_Hackathon_3rd_Edition.V2(2).pdf"
+      },
+      "sha256": "7C8AAE454DFC755C2CCD1D9D9C7D21D222437B55AA0339539553800BE0A949DD",
+      "bytes": 779137,
+      "verified_against_source": true
+    },
+    {
+      "path": "documents/Samsung_PRISM_GenAI_Hackathon_3_FAQ_v4.docx",
+      "origin": {
+        "kind": "original-file",
+        "parent_filename": "Samsung_PRISM_GenAI_Hackathon_3_FAQ_v4.docx"
+      },
+      "sha256": "831BC81D71F764CB94370133DE59840809B42631581BC91A2361BBDA9B8691AB",
+      "bytes": 43559,
+      "verified_against_source": true
+    },
+    {
+      "path": "templates/CollegeName_TeamName_Submission.pptx",
+      "origin": {
+        "kind": "original-file",
+        "parent_filename": "CollegeName_TeamName_Submission.pptx"
+      },
+      "sha256": "260A7BC811F50618F9A1EB7E46F2DA668537ACF8BCE72150C6CB1973E9C8A02C",
+      "bytes": 276796,
+      "verified_against_source": true
+    },
+    {
+      "path": "templates/LangAI3.0_AI_Disclosure.docx",
+      "origin": {
+        "kind": "original-file",
+        "parent_filename": "LangAI3.0_AI_Disclosure.docx"
+      },
+      "sha256": "B3947950332A44F27C85655ED1C29F295A6B9313CE8EB7C9994BC93506E2069E",
+      "bytes": 28375,
+      "verified_against_source": true
+    },
+    {
+      "path": "archives/participant-kit-all-themes.zip",
+      "origin": {
+        "kind": "original-file",
+        "parent_filename": "participant-kit-all-themes.zip"
+      },
+      "sha256": "F3D359EACD2C455903482F17E2A73B7A5C635069FC9DF7B8913FFB0ABAD9B0ED",
+      "bytes": 1150937,
+      "verified_against_source": true
+    },
+    {
+      "path": "archives/Theme02_Input_Kit.zip",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/participant-kit-all-themes.zip",
+        "entry": "participant-kit/Theme02_Input_Kit.zip"
+      },
+      "sha256": "799BA9C16221B3761EE7648CF6B6C083AAFCB4F358685884F322B290E064A1F5",
+      "bytes": 59702,
+      "verified_against_source": true
+    },
+    {
+      "path": "student_kit/siis_responses.json",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/Theme02_Input_Kit.zip",
+        "entry": "student_kit/siis_responses.json"
+      },
+      "sha256": "4715C5313662B0D4D048F2283256A647FD8D4C6AE918A6A7C435C73887A6DA0D",
+      "bytes": 79746,
+      "verified_against_source": true
+    },
+    {
+      "path": "student_kit/deeplinks.json",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/Theme02_Input_Kit.zip",
+        "entry": "student_kit/deeplinks.json"
+      },
+      "sha256": "2B2C7F75E5202BF521E16019A8DA2096739DDC7FC63EE508CE81C3F0D7A9E67D",
+      "bytes": 325214,
+      "verified_against_source": true
+    },
+    {
+      "path": "student_kit/schema.py",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/Theme02_Input_Kit.zip",
+        "entry": "student_kit/schema.py"
+      },
+      "sha256": "649440E0309B25DC5363039FC28DD7F21B71177779B909DEF8757B41E76EBF6B",
+      "bytes": 1468,
+      "verified_against_source": true
+    },
+    {
+      "path": "student_kit/input.txt",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/Theme02_Input_Kit.zip",
+        "entry": "student_kit/input.txt"
+      },
+      "sha256": "F0CCFEE5897B561A4575660E21BFD0646990195C46CFB288660E6BE8FC411E97",
+      "bytes": 3167,
+      "verified_against_source": true
+    },
+    {
+      "path": "student_kit/sample_output.json",
+      "origin": {
+        "kind": "zip-entry",
+        "container": "archives/Theme02_Input_Kit.zip",
+        "entry": "student_kit/sample_output.json"
+      },
+      "sha256": "B6AF90FA3C58DCA371741B11CB4A9EF43E17D019D9683ABB8488547A84DC83FE",
+      "bytes": 2134,
+      "verified_against_source": true
+    }
+  ]
+}
