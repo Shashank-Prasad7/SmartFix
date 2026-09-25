@@ -1,6 +1,6 @@
 """End-to-end API tests using FastAPI TestClient."""
-import pytest
 from fastapi.testclient import TestClient
+
 from theme2.src.api import app
 
 client = TestClient(app)
@@ -60,3 +60,15 @@ def test_preview_endpoint():
     assert "normalized" in data
     assert "trace" in data
     assert data["normalized"]["facts"]["screen_visible"] is False
+    assert "preview_projection" in data["trace"]["stage_timings_ms"]
+    repeated = client.post("/v1/preview", json=payload)
+    assert repeated.status_code == 200
+    assert repeated.json()["trace"]["cache_status"] == "exact_hit"
+    assert repeated.json()["trace"]["stages"]["normalization"] == "executed for preview"
+
+
+def test_development_sample_is_explicitly_labeled_synthetic():
+    response = client.get("/api/development-sample")
+    assert response.status_code == 200
+    assert response.json()["provenance"] == "team-authored synthetic development fixture"
+    assert "inner display" in response.json()["content"].lower()

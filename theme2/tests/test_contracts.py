@@ -1,19 +1,19 @@
 """Unit tests for contract and formatting guarantees (G2-G5, A1-A2)."""
-import re
 import pytest
+from pydantic import ValidationError
+
 from theme2.src.sanitizer import (
     GOAL_REGEX,
-    create_dummy_deeplink,
     enforce_description_format,
     enforce_goal_format,
     enforce_title_word_count,
     sanitize_response,
     sanitize_text,
+    validate_response,
 )
 from theme2.src.schema import (
     Action,
     ContextDeeplinkResponse,
-    Deeplink,
     Goal,
     StepGroup,
     actionCategory,
@@ -67,7 +67,7 @@ def test_zero_url_leaks():
 
 
 def test_auto_action_deeplink_guarantee():
-    # An auto action with null deeplink must be given a compliant dummy deeplink
+    # Missing catalog evidence must not manufacture a dummy deeplink.
     group = StepGroup(steps=["Step 1"], actionableDeeplink=None)
     action = Action(
         actionName="Configure Wifi",
@@ -83,9 +83,75 @@ def test_auto_action_deeplink_guarantee():
     )
     resp = ContextDeeplinkResponse(contexts=[goal])
 
-    sanitized = sanitize_response(resp)
-    act = sanitized.contexts[0].actions[0]
-    assert act.stepGroups[0].actionableDeeplink is not None
-    assert act.stepGroups[0].actionableDeeplink.deeplink.startswith("bixby://")
-    assert act.description.startswith("It will ")
-    assert 5 <= len(act.description.split()) <= 7
+    with pytest.raises(ValueError, match="approved catalog link"):
+        sanitize_response(resp)
+
+
+def _valid_response():
+    return ContextDeeplinkResponse(contexts=[Goal(
+        goal="Follow these steps to perform this Screen Repair Troubleshooting.",
+        title="Screen Repair", score=0.5,
+        actions=[Action(actionName="Restart device", description="It will guide the device restart",
+                        stepGroups=[StepGroup(steps=["Press Power for 20 seconds."])],
+                        category=actionCategory.manual)],
+    )])
+
+
+@pytest.mark.parametrize("field,value", [
+    ("goal", "Follow these steps to perform this Screen Repair Troubleshooting"),
+    ("title", "One"),
+    ("score", float("nan")),
+    ("score", -0.1),
+    ("score", 1.1),
+])
+def test_success_mutations_are_rejected_at_goal_level(field, value):
+    response = _valid_response()
+    setattr(response.contexts[0], field, value)
+    with pytest.raises(ValueError):
+        validate_response(response)
+
+
+@pytest.mark.parametrize("description", [
+    "Configure your device now", "It may guide the device restart",
+    "It will restart", "It will guide the device restart procedure safely today",
+])
+def test_success_mutations_are_rejected_at_action_level(description):
+    response = _valid_response()
+    response.contexts[0].actions[0].description = description
+    with pytest.raises(ValueError):
+        validate_response(response)
+
+
+@pytest.mark.parametrize("field", ["contexts", "actions", "stepGroups", "steps"])
+def test_success_mutations_are_rejected_for_empty_lists(field):
+    response = _valid_response()
+    if field == "contexts":
+        response.contexts = []
+    elif field == "actions":
+        response.contexts[0].actions = []
+    elif field == "stepGroups":
+        response.contexts[0].actions[0].stepGroups = []
+    else:
+        response.contexts[0].actions[0].stepGroups[0].steps = []
+    with pytest.raises(ValueError):
+        validate_response(response)
+
+
+def test_official_schema_rejects_extra_diagnostic_fields():
+    payload = _valid_response().model_dump()
+    payload["trace"] = {"request_id": "secret"}
+    with pytest.raises(ValidationError):
+        ContextDeeplinkResponse.model_validate(payload)
+
+
+@pytest.mark.parametrize("fragment", [
+    "https://example.org/help", "www.example.net", "example.com",
+    "example.html", "[support](https://example.org)",
+    "![photo](https://example.org/a.png)", "<a href='x'>support</a>",
+    "<img src='x'>",
+])
+def test_official_validator_rejects_prohibited_fragments(fragment):
+    response = _valid_response()
+    response.contexts[0].actions[0].stepGroups[0].steps[0] = f"Press Power. {fragment}"
+    with pytest.raises(ValueError, match="Prohibited"):
+        validate_response(response)

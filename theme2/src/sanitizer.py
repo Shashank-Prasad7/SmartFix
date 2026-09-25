@@ -7,13 +7,12 @@ Enforces all hackathon constraints:
 - A1: Score in range [0.0, 1.0]
 - A2: Auto action deeplink requirement
 """
+import math
 import re
-from typing import Any, List, Optional
+from typing import Any
+
 from theme2.src.schema import (
     ContextDeeplinkResponse,
-    Goal,
-    Action,
-    StepGroup,
     Deeplink,
     actionCategory,
 )
@@ -29,7 +28,8 @@ URL_PATTERNS = [
     re.compile(r'<[^>]+>', re.IGNORECASE),           # HTML tags
 ]
 
-GOAL_REGEX = re.compile(r'^Follow these steps to perform this .+ (Troubleshooting|Configuration)\.?$', re.IGNORECASE)
+GOAL_REGEX = re.compile(r'^Follow these steps to perform this [^.]+ (Troubleshooting|Configuration)\.$')
+PROHIBITED = re.compile(r"https?://|www\.|\.(?:com|org|net|edu|gov|io|html|htm|php|jsp)\b|!\[|\[[^]]+\]\(|<\s*/?\s*(?:a|img)\b", re.IGNORECASE)
 
 
 def sanitize_text(text: str) -> str:
@@ -37,10 +37,12 @@ def sanitize_text(text: str) -> str:
     if not text:
         return ""
     cleaned = text
+    cleaned = re.sub(r"\b(?:kidshome\.pin@samsung\.com)\b", "the Samsung Kids PIN reset contact", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b", "the listed contact", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'!\[[^]]*\]\([^)]*\)', '', cleaned)
     # Replace markdown links with their label
     cleaned = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', cleaned)
     # Remove markdown images
-    cleaned = re.sub(r'!\[.*?\]\(.*?\)', '', cleaned)
     # Strip HTML tags
     cleaned = re.sub(r'<[^>]+>', '', cleaned)
     # Strip http/https/www/domains/emails
@@ -49,6 +51,48 @@ def sanitize_text(text: str) -> str:
     # Clean redundant whitespace
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     return cleaned
+
+
+def validate_response(response: ContextDeeplinkResponse) -> None:
+    """Reject incomplete, malformed, or leaking official success bodies."""
+    if not response.contexts:
+        raise ValueError("Empty contexts")
+    for goal in response.contexts:
+        if not GOAL_REGEX.fullmatch(goal.goal):
+            raise ValueError("Invalid goal")
+        if not 2 <= len(goal.title.split()) <= 3:
+            raise ValueError("Invalid title")
+        if not math.isfinite(goal.score) or not 0 <= goal.score <= 1:
+            raise ValueError("Invalid score")
+        if not goal.actions:
+            raise ValueError("Empty actions")
+        for action in goal.actions:
+            if action.category is None:
+                raise ValueError("Missing action category")
+            if not action.actionName.strip() or not action.description.startswith("It will ") or not 5 <= len(action.description.split()) <= 7:
+                raise ValueError("Invalid action")
+            if not action.stepGroups:
+                raise ValueError("Empty step groups")
+            for group in action.stepGroups:
+                if not group.steps or any(not step.strip() for step in group.steps):
+                    raise ValueError("Empty steps")
+                if action.category == actionCategory.auto and group.actionableDeeplink is None:
+                    raise ValueError("Automatic action lacks link")
+                if group.actionableDeeplink and not group.actionableDeeplink.deeplink.startswith("bixby://"):
+                    raise ValueError("Invalid actionable URI")
+                if group.validationDeeplink and not group.validationDeeplink.deeplink.startswith("bixby://"):
+                    raise ValueError("Invalid validation URI")
+    def check(value: Any) -> None:
+        if isinstance(value, str) and PROHIBITED.search(value):
+            raise ValueError("Prohibited URL or markup in output")
+        if isinstance(value, dict):
+            for key, item in value.items():
+                check(key)
+                check(item)
+        elif isinstance(value, list):
+            for item in value:
+                check(item)
+    check(response.model_dump())
 
 
 def enforce_goal_format(goal_text: str, fallback_topic: str = "Device Issue") -> str:
@@ -102,7 +146,7 @@ def enforce_description_format(desc_text: str, action_name: str = "Settings") ->
     words = cleaned.split()
     if not words:
         # Default 6-word phrase
-        return f"It will configure your device settings now"
+        return "It will configure your device settings now"
     
     # We need 3 to 5 words following 'It will' (total 5 to 7 words)
     target_count = min(max(len(words), 3), 5)
@@ -120,11 +164,11 @@ def enforce_description_format(desc_text: str, action_name: str = "Settings") ->
 
 def create_dummy_deeplink(screen_name: str = "Settings") -> Deeplink:
     """Creates a compliant bixby://dummy_positive placeholder."""
-    clean_screen = sanitize_text(screen_name)[:25] or "Settings"
+    clean_screen = " ".join((sanitize_text(screen_name) or "Settings").split()[:3])
     return Deeplink(
         deeplink="bixby://dummy_positive",
-        description="It will open the device settings screen",
-        message=f"Open {clean_screen}",
+        description=enforce_description_format(f"open {clean_screen} settings screen"),
+        message=f"Open {clean_screen} in device Settings",
         originalType="onClickURL"
     )
 
@@ -141,7 +185,7 @@ def sanitize_response(response: ContextDeeplinkResponse) -> ContextDeeplinkRespo
         # 3. Clamp score in [0.0, 1.0]
         try:
             val = float(goal.score)
-            if val != val:  # NaN check
+            if not math.isfinite(val):
                 val = 0.85
             goal.score = round(max(0.0, min(1.0, val)), 2)
         except (TypeError, ValueError):
@@ -162,7 +206,7 @@ def sanitize_response(response: ContextDeeplinkResponse) -> ContextDeeplinkRespo
                     if c:
                         clean_steps.append(c)
                 if not clean_steps:
-                    clean_steps.append("Open Settings and follow on-screen instructions.")
+                    raise ValueError("All source steps were removed by sanitization")
                 group.steps = clean_steps
                 
                 # Check actionable deeplink
@@ -171,9 +215,9 @@ def sanitize_response(response: ContextDeeplinkResponse) -> ContextDeeplinkRespo
                     if group.actionableDeeplink.message:
                         group.actionableDeeplink.message = sanitize_text(group.actionableDeeplink.message)
                 
-                # Auto category constraint: must have an actionable deeplink
+                # An unsupported automatic action must never acquire a dummy.
                 if action.category == actionCategory.auto and not group.actionableDeeplink:
-                    group.actionableDeeplink = create_dummy_deeplink(action.actionName)
+                    raise ValueError("Automatic action lacks an approved catalog link")
                 
                 # Check validation deeplink
                 if group.validationDeeplink:

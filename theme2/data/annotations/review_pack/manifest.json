@@ -1,0 +1,31 @@
+{
+  "purpose": "Blind independent semantic review before candidate outputs are shown",
+  "official_dataset_sha256": "4715c5313662b0d4d048f2283256a647fd8d4c6ae918a6a7c435c73887a6da0d",
+  "development_articles_sha256": "53a403c9dcc3c79d3a1d1f7b611f96cef8284ead97b7629200220ab9a99bd95f",
+  "development_fact_pairs_sha256": "ef39124b8f4191c70e5659fcae859d1e63d55ede08dad855b1b4094c9d90808f",
+  "cache_adversaries_sha256": "f0950b2a23967c0823343d8495d1e3334c67c0fa6f61e7937b0d8f1150d15538",
+  "counts": {
+    "official_queries": 20,
+    "unique_official_articles": 11,
+    "development_articles": 3,
+    "development_fact_pairs": 6,
+    "development_cache_adversaries": 30,
+    "variations": 180
+  },
+  "sealed_holdout": {
+    "article_slots": [
+      "HOLD-ART-01",
+      "HOLD-ART-02",
+      "HOLD-ART-03"
+    ],
+    "fact_pair_slots": [
+      "HOLD-FACT-01",
+      "HOLD-FACT-02",
+      "HOLD-FACT-03",
+      "HOLD-FACT-04",
+      "HOLD-FACT-05",
+      "HOLD-FACT-06"
+    ],
+    "status": "PENDING independent source/label supply; no holdout content in this pack"
+  }
+}

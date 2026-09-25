@@ -1,0 +1,23 @@
+{
+  "provenance": "Team-authored synthetic development fixtures. These are not independent reviewer labels or sealed holdout articles.",
+  "articles": [
+    {
+      "id": "DEV-FOLD-01",
+      "title": "Foldable display access",
+      "content": "## Inner display visible without touch\nIf the inner display is visible and inner display touch does not work, connect a USB mouse to navigate the device. If a USB mouse is available, use it to back up personal data.\n## Inner display black\nIf the inner display is black, press and hold Power and Volume down for 20 seconds to force a restart. The cover screen may still work.\n## Optional monitor\nIf the phone supports HDMI, connect a compatible monitor to view the image. Check compatibility before attempting this option.",
+      "review_focus": ["inner and cover display scope", "mouse availability", "HDMI uncertainty", "full-source rendering"]
+    },
+    {
+      "id": "DEV-RADIO-02",
+      "title": "Bluetooth and scanning controls",
+      "content": "## Bluetooth radio\nTo stop wireless pairing, disable Bluetooth in Settings.\n## Bluetooth scanning\nIf background discovery is the problem, disable Bluetooth scanning in Settings.\n## Physical check\nPress the side key to restart the phone after checking the setting.",
+      "review_focus": ["separate setting identities", "same operation on distinct controls", "manual restart"]
+    },
+    {
+      "id": "DEV-RESET-03",
+      "title": "Last resort data reset",
+      "content": "## Backup before factory reset\nA factory data reset is a last resort after previous troubleshooting failed. It will erase all personal data. Before proceeding, back up your personal data.\n## Reset the device\nAfter backup is complete, open Settings, select General management, then Reset, then Factory data reset. Tap Delete all to complete the reset.\n## Auto factory reset information\nAuto factory reset is a separate security setting. Do not enable it as a substitute for Factory data reset.",
+      "review_focus": ["backup prerequisite", "destructive category", "Factory data reset versus Auto factory reset", "negative instruction"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "provenance": "Team-authored development expectations; not independent reviewer judgments. Each pair changes one explicit preview fact while keeping the article and query fixed.",
+  "pairs": [
+    {"id":"FACT-DEV-01","article_id":"DEV-FOLD-01","query":"Inner display touch does not work","procedure_title":"Inner display visible without touch","action_index":0,"base":{"inner_screen_visible":true,"inner_touch_working":false},"changed":{"inner_screen_visible":false,"inner_touch_working":false},"expected":["applicable","not applicable"]},
+    {"id":"FACT-DEV-02","article_id":"DEV-FOLD-01","query":"Inner display is visible","procedure_title":"Inner display visible without touch","action_index":0,"base":{"inner_screen_visible":true,"inner_touch_working":false},"changed":{"inner_screen_visible":true,"inner_touch_working":true},"expected":["applicable","not applicable"]},
+    {"id":"FACT-DEV-03","article_id":"DEV-FOLD-01","query":"I need access to my data","procedure_title":"Inner display visible without touch","action_index":1,"base":{"alternate_input_available":true},"changed":{"alternate_input_available":false},"expected":["applicable","not applicable"]},
+    {"id":"FACT-DEV-04","article_id":"DEV-FOLD-01","query":"Can I view this on a monitor?","procedure_title":"Optional monitor","action_index":0,"base":{"hdmi_compatible":true},"changed":{"hdmi_compatible":false},"expected":["applicable","not applicable"]},
+    {"id":"FACT-DEV-05","article_id":"DEV-FOLD-01","query":"Inner display is visible but touch does not work","procedure_title":"Inner display visible without touch","action_index":0,"base":{"inner_screen_visible":true,"inner_touch_working":false,"cover_screen_visible":true},"changed":{"inner_screen_visible":true,"inner_touch_working":false,"cover_screen_visible":false},"expected":["applicable","applicable"]},
+    {"id":"FACT-DEV-06","article_id":"DEV-RESET-03","query":"Factory data reset after failed steps","procedure_title":"Reset the device","action_index":0,"base":{"backup_complete":true},"changed":{"backup_complete":false},"expected":["applicable","not applicable"]}
+  ]
+}
