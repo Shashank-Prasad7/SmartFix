@@ -41,6 +41,17 @@ def test_troubleshoot_endpoint_validation_errors():
     assert response2.status_code == 422
 
 
+def test_validation_errors_do_not_echo_submitted_private_fields():
+    for endpoint in ("/v1/troubleshoot", "/v1/preview"):
+        response = client.post(endpoint, json={
+            "query": "private complaint sentinel",
+            "unexpected_secret": "private credential sentinel",
+        })
+        assert response.status_code == 422
+        assert response.json() == {"detail": "Invalid request body"}
+        assert "sentinel" not in response.text
+
+
 def test_preview_endpoint():
     payload = {
         "query": "My Galaxy phone screen is blank",

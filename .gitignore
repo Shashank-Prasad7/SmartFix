@@ -18,6 +18,13 @@ theme2/cache.db
 
 # Environment variables & secrets
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite3*
 *.local
 
 # OS / IDE

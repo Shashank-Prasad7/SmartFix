@@ -4,7 +4,7 @@ Samsung PRISM GenAI Hackathon Theme 2. The application accepts a complaint and a
 
 ## Status
 
-The API, console, guarded cache, tests, and Dockerfile are implemented. The last complete local release run passed 13/13 checks and 105 tests. This local PR preparation adds an opt-in, source-constrained two-stage Gemini path and passes 110 tests with mocked hosted calls, Ruff, TypeScript, Vite, a 20/20 deterministic offline export, and official-input provenance. These results are local contract evidence, not independent semantic accuracy, hosted-model performance, public latency, or an official score.
+The API, console, guarded cache, tests, and Dockerfile are implemented. The last complete local release run passed 13/13 checks and 105 tests. The current local PR preparation passes 112 tests, including mocked hosted stages and privacy regressions, plus Ruff, a fresh frontend install/build, a 20/20 deterministic export, and official-input provenance. These results are local contract evidence; hosted feasibility, public latency, and independent semantic quality still require measurement. See the [PRISM and privacy review](theme2/reports/PUSH_REVIEW.md).
 
 The submission brief requires two language stages. Set `PRISM_LLM_MODE=gemini` and provide `GEMINI_API_KEY` through the deployment environment to use the implemented normalization and procedure-structuring stages. Actual account access, quota, source quality, and cold latency remain unverified. The team also needs independent semantic review, human review of generated query variations, a Docker and public-endpoint check, and final submission artifact review and sign-off. See [Theme 2 release status](theme2/reports/RELEASE_STATUS.md) and [evaluation protocol](theme2/EVAL.md).
 

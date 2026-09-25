@@ -4,6 +4,8 @@ The service accepts a customer complaint and the full SIIS article supplied with
 that request. It compiles every supported source procedure into the official
 `ContextDeeplinkResponse` and provides a separate evidence and applicability
 preview. No network service or API credential is required for the local demo.
+Use the supplied samples or synthetic data. Requests are cached locally and
+hosted mode sends text to Gemini; see [privacy and data handling](PRIVACY.md).
 
 ## What is implemented
 

@@ -63,6 +63,9 @@ class GeminiTwoStage:
         if not self._slots.acquire(timeout=max(0, remaining - 0.5)):
             raise HostedQuotaError("Hosted inference capacity unavailable")
         try:
+            remaining = deadline - time.perf_counter()
+            if remaining <= 0.5:
+                raise TimeoutError("Hosted inference deadline exceeded")
             with urllib.request.urlopen(request, timeout=remaining) as response:
                 if int(response.headers.get("Content-Length", "0")) > 1_000_000:
                     raise ValueError("Provider output exceeds limit")

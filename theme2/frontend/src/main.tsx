@@ -160,6 +160,7 @@ function App() {
           <label htmlFor="title">Source article title</label><input id="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Article title" />
           <label htmlFor="content">Source article content</label><textarea id="content" className="source-field" value={content} onChange={(event) => setContent(event.target.value)} placeholder="Paste the complete SIIS article here..." />
           <details className="fact-panel"><summary>Preview facts <span>{Object.keys(facts).length} overrides</span></summary><p>Overrides change applicability in this preview only. Unknown restores uncertainty.</p><div className="fact-grid">{FACTS.map((fact) => <label className="fact-control" key={fact.key}>{fact.label}<select value={String(facts[fact.key] ?? 'unknown')} onChange={(event) => setFacts((current) => ({ ...current, [fact.key]: event.target.value === 'unknown' ? null : event.target.value === 'true' }))}><option value="unknown">Unknown</option><option value="true">Yes</option><option value="false">No</option></select></label>)}</div></details>
+          <p className="muted">Use sample or synthetic data. Requests are saved in the server cache and may be sent to Gemini. Do not enter personal or confidential information.</p>
           <button className="run-button" onClick={() => void run()} disabled={busy}>{busy ? 'Compiling guide…' : 'Generate guided response'}<span>↗</span></button>
           {error && <div className="error" role="alert">{error}</div>}
         </section>

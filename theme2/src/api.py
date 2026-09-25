@@ -11,8 +11,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -53,6 +54,14 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Smart Guided Troubleshooting Engine", version="2.0.0", lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request_handler(_request, _exc: RequestValidationError) -> JSONResponse:
+    # FastAPI's default details can echo submitted input, including unknown fields.
+    return JSONResponse(status_code=422, content={"detail": "Invalid request body"})
+
+
 ASSETS = ROOT / "static" / "app" / "assets"
 if ASSETS.is_dir():
     app.mount("/assets", StaticFiles(directory=ASSETS), name="assets")

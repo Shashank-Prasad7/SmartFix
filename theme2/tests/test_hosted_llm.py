@@ -1,6 +1,7 @@
 """Hosted stages use model output only after source and cache checks."""
 
 import uuid
+from types import SimpleNamespace
 
 import pytest
 
@@ -101,3 +102,16 @@ def test_hosted_mode_requires_api_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     with pytest.raises(ValueError, match="GEMINI_API_KEY"):
         GeminiTwoStage.from_environment()
+
+
+def test_no_provider_call_when_admission_consumes_the_deadline(monkeypatch):
+    adapter = _adapter()
+    clock = iter([10.0, 17.0])
+    monkeypatch.setattr("theme2.src.hosted_llm.time", SimpleNamespace(perf_counter=lambda: next(clock)))
+    calls = []
+    monkeypatch.setattr("urllib.request.urlopen", lambda *args, **kwargs: calls.append(args))
+    with pytest.raises(TimeoutError):
+        adapter._generate(adapter.normalizer_model, "synthetic prompt", 17.0)
+    assert calls == []
+    assert adapter._slots.acquire(blocking=False)
+    adapter._slots.release()

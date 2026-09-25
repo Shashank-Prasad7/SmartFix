@@ -10,7 +10,9 @@ file records their measured counts and limits for repository readers.
 
 The pre-PR cleanup added an opt-in, two-stage Gemini adapter after that release
 run. Its normalization, source-constrained JSON structuring, cache skips, and
-credential guard pass mocked tests; the complete current suite passes 110/110.
+credential guard pass mocked tests. The subsequent PRISM/privacy review adds
+request-error privacy and admission-deadline regressions; the current suite
+passes 112/112. See [PUSH_REVIEW.md](PUSH_REVIEW.md) for the final local review.
 No live provider call or fresh full release run is included in this status.
 
 | EVAL case | Status | Evidence and remaining boundary |

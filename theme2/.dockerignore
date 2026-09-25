@@ -10,4 +10,14 @@ codes
 **/__pycache__
 **/.pytest_cache
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+data/official/archives
+data/official/documents
+data/official/templates
+data/annotations
 *.pyc

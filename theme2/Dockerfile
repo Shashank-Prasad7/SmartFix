@@ -1,7 +1,7 @@
 FROM node:24-alpine AS frontend
 WORKDIR /build
 RUN npm install -g pnpm@11.19.0
-COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/vite.config.mjs frontend/index.html ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/vite.config.mjs frontend/tsconfig.json frontend/index.html ./
 COPY frontend/src ./src
 COPY frontend/public ./public
 RUN pnpm install --frozen-lockfile --store-dir /build/.pnpm-store && pnpm exec tsc --noEmit && pnpm exec vite build --config vite.config.mjs --configLoader runner
