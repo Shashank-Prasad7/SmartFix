@@ -9,7 +9,8 @@ hosted mode sends text to Gemini; see [privacy and data handling](PRIVACY.md).
 
 ## Architecture
 
-![SmartFix system architecture](architecture.svg)
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/51ba985b-ae5e-4be2-83bd-7339fc85b040" />
+
 
 The console sends the complaint and supplied article to FastAPI. The pipeline
 checks compatible caches, compiles the full article, validates catalog links,
