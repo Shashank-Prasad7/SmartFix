@@ -44,11 +44,12 @@ unverified on the team's account.
 to an already downloaded `all-MiniLM-L6-v2` directory to warm a dense catalog
 index. Without that directory, BM25 and strict compatibility rules handle
 catalog lookup. The hosted two-stage model feasibility gate, independent
-semantic labels, and public endpoint measurements remain open. Working deck,
-disclosure, and silent captioned video copies may be generated in the local
-`submission/` directory; that directory is excluded from Git until team review
-and final identity/signature details. Offline contract passes do not establish
-semantic accuracy or an official score.
+semantic labels, and public endpoint measurements remain open. The unsigned AI
+disclosure working copy is included at
+`submission/PRISM_Theme2_AI_Disclosure_Working.docx` and still requires team
+review, identity details, representative attestation, and signature. The
+presentation and silent captioned video remain local-only. Offline contract
+passes do not establish semantic accuracy or an official score.
 
 ## Run locally (PowerShell)
 

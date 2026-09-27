@@ -23,4 +23,4 @@ theme2/.venv/Scripts/python.exe -m pytest theme2/tests -q
 theme2/.venv/Scripts/python.exe -m uvicorn theme2.src.api:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-Open `http://127.0.0.1:8000/`. See [theme2/README.md](theme2/README.md) for API endpoints, export steps, Docker commands, and submission artifact generation. The official sample inputs live under `theme2/data/official/` with recorded hashes. Local environments, caches, run logs, and unfinished submission files are excluded from Git.
+Open `http://127.0.0.1:8000/`. See [theme2/README.md](theme2/README.md) for API endpoints, export steps, Docker commands, and submission artifact generation. The official sample inputs live under `theme2/data/official/` with recorded hashes. Local environments, caches, run logs, presentation/video files, and generated exports are excluded from Git. The unsigned AI disclosure working copy is included at `theme2/submission/PRISM_Theme2_AI_Disclosure_Working.docx`.
