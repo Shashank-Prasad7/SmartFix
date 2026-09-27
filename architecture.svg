@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 940" role="img" aria-labelledby="title description">
+  <title id="title">SmartFix system architecture</title>
+  <desc id="description">A React console sends a complaint and supplied support article to FastAPI. The troubleshooting pipeline checks caches, normalizes the complaint, compiles the full article, resolves catalog links, and validates the response. Gemini is optional. The API returns a full official response and a separate preview with evidence.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0L10 4L0 8Z" fill="#315dbb"/>
+    </marker>
+    <marker id="arrow-dashed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0L10 4L0 8Z" fill="#7149cf"/>
+    </marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#172b4d}
+      .title{font-size:34px;font-weight:700}
+      .subtitle{font-size:17px;fill:#526784}
+      .heading{font-size:20px;font-weight:700}
+      .body{font-size:16px}
+      .small{font-size:14px;fill:#526784}
+      .number{font-size:18px;font-weight:700;fill:#fff}
+      .panel{stroke-width:2;rx:16}
+      .row{fill:#fff;stroke:#d6e0ee;stroke-width:1.5;rx:10}
+      .flow{fill:none;stroke:#315dbb;stroke-width:3;marker-end:url(#arrow)}
+      .optional{fill:none;stroke:#7149cf;stroke-width:3;stroke-dasharray:9 7;marker-end:url(#arrow-dashed)}
+    </style>
+  </defs>
+  <rect width="1600" height="940" fill="#f6f9fd"/>
+  <text x="48" y="58" class="title">SmartFix | System Architecture</text>
+  <text x="50" y="91" class="subtitle">Source-grounded troubleshooting from a complaint and a supplied support article</text>
+
+  <rect x="40" y="132" width="300" height="410" class="panel" fill="#edf6ff" stroke="#8ab7ef"/>
+  <circle cx="72" cy="168" r="20" fill="#2858ad"/><text x="72" y="174" text-anchor="middle" class="number">1</text>
+  <text x="104" y="175" class="heading">User and Web Console</text>
+  <text x="66" y="215" class="small">React + TypeScript</text>
+  <rect x="62" y="237" width="256" height="122" class="row"/>
+  <text x="82" y="268" class="heading">Request</text>
+  <text x="82" y="299" class="body">Customer complaint</text>
+  <text x="82" y="327" class="body">SIIS article title + full text</text>
+  <text x="82" y="349" class="small">Optional preview facts</text>
+  <rect x="62" y="380" width="256" height="130" class="row"/>
+  <text x="82" y="411" class="heading">Inspect</text>
+  <text x="82" y="442" class="body">Selected guide and full output</text>
+  <text x="82" y="470" class="body">Source evidence and trace</text>
+  <text x="82" y="495" class="small">Applicability: yes / no / unknown</text>
+
+  <rect x="382" y="132" width="300" height="410" class="panel" fill="#eaf8f5" stroke="#76caba"/>
+  <circle cx="414" cy="168" r="20" fill="#078a79"/><text x="414" y="174" text-anchor="middle" class="number">2</text>
+  <text x="446" y="175" class="heading">FastAPI Service</text>
+  <text x="408" y="215" class="small">Request validation and routing</text>
+  <rect x="404" y="237" width="256" height="145" class="row"/>
+  <text x="424" y="269" class="heading">Endpoints</text>
+  <text x="424" y="302" class="body">GET /health</text>
+  <text x="424" y="332" class="body">POST /v1/troubleshoot</text>
+  <text x="424" y="362" class="body">POST /v1/preview</text>
+  <rect x="404" y="402" width="256" height="108" class="row"/>
+  <text x="424" y="435" class="heading">Validate request</text>
+  <text x="424" y="466" class="body">Then call pipeline</text>
+  <text x="424" y="492" class="small">Bounded request deadline</text>
+
+  <rect x="724" y="132" width="430" height="410" class="panel" fill="#f2efff" stroke="#ad9ae9"/>
+  <circle cx="756" cy="168" r="20" fill="#6745c1"/><text x="756" y="174" text-anchor="middle" class="number">3</text>
+  <text x="788" y="175" class="heading">Troubleshooting Pipeline</text>
+  <rect x="748" y="207" width="382" height="45" class="row"/><text x="766" y="236" class="body">1. Exact answer cache</text>
+  <rect x="748" y="262" width="382" height="45" class="row"/><text x="766" y="291" class="body">2. Normalize complaint; check safe reuse</text>
+  <rect x="748" y="317" width="382" height="55" class="row"/><text x="766" y="341" class="body">3. Reuse procedure or compile full</text><text x="789" y="362" class="body">supplied article</text>
+  <rect x="748" y="382" width="382" height="55" class="row"/><text x="766" y="406" class="body">4. Resolve links from immutable catalog</text><text x="789" y="427" class="small">Uncertain matches remain manual</text>
+  <rect x="748" y="447" width="382" height="70" class="row"/><text x="766" y="474" class="body">5. Render and validate official response</text><text x="789" y="501" class="small">Cache only complete, validated results</text>
+
+  <rect x="1198" y="132" width="362" height="410" class="panel" fill="#eef5ff" stroke="#8ab7ef"/>
+  <circle cx="1230" cy="168" r="20" fill="#2858ad"/><text x="1230" y="174" text-anchor="middle" class="number">6</text>
+  <text x="1262" y="175" class="heading">Response Paths</text>
+  <rect x="1222" y="208" width="314" height="124" class="row"/>
+  <text x="1242" y="241" class="heading">/v1/troubleshoot</text>
+  <text x="1242" y="273" class="body">Official ContextDeeplinkResponse</text>
+  <text x="1242" y="302" class="small">Full source-backed guide</text>
+  <rect x="1222" y="349" width="314" height="158" class="row"/>
+  <text x="1242" y="382" class="heading">/v1/preview</text>
+  <text x="1242" y="414" class="body">Selected guide + applicability</text>
+  <text x="1242" y="443" class="body">Source evidence + trace</text>
+  <text x="1242" y="480" class="small">Official response stays separate</text>
+
+  <path d="M340 310H382" class="flow"/>
+  <path d="M682 310H724" class="flow"/>
+  <path d="M1154 310H1198" class="flow"/>
+  <path d="M1198 524H690V558H340" class="flow"/>
+
+  <rect x="724" y="574" width="430" height="142" class="panel" fill="#fbf8ff" stroke="#ad9ae9" stroke-dasharray="9 7"/>
+  <circle cx="756" cy="608" r="20" fill="#6745c1"/><text x="756" y="614" text-anchor="middle" class="number">4</text>
+  <text x="788" y="614" class="heading">Optional Hosted Gemini</text>
+  <text x="750" y="652" class="body">Complaint normalization</text>
+  <text x="750" y="680" class="body">Source-constrained procedure structuring</text>
+  <text x="750" y="704" class="small">Local code validates grounding and catalog metadata</text>
+  <path d="M900 542V574" class="optional"/>
+  <path d="M980 574V542" class="optional"/>
+
+  <rect x="40" y="754" width="1520" height="144" class="panel" fill="#edf7ff" stroke="#8ab7ef"/>
+  <circle cx="72" cy="788" r="20" fill="#2858ad"/><text x="72" y="794" text-anchor="middle" class="number">5</text>
+  <text x="104" y="795" class="heading">Data and Cache</text>
+  <rect x="66" y="817" width="340" height="58" class="row"/><text x="86" y="842" class="body">Supplied SIIS article</text><text x="86" y="864" class="small">Complete article compilation</text>
+  <rect x="430" y="817" width="340" height="58" class="row"/><text x="450" y="842" class="body">Immutable settings / deeplink catalog</text><text x="450" y="864" class="small">Link resolution metadata</text>
+  <rect x="794" y="817" width="340" height="58" class="row"/><text x="814" y="842" class="body">Bounded SQLite cache</text><text x="814" y="864" class="small">Answers and compiled procedures</text>
+  <rect x="1158" y="817" width="376" height="58" class="row"/><text x="1178" y="842" class="body">Bounded in-memory cache</text><text x="1178" y="864" class="small">Hot answers and procedures</text>
+  <path d="M230 754V720H780V542" class="flow"/>
+  <path d="M600 754V720H870V542" class="flow"/>
+  <path d="M960 754V720H1020V542" class="flow"/>
+
+  <text x="48" y="928" class="small">Solid arrows: local data flow</text>
+  <line x1="250" y1="922" x2="310" y2="922" stroke="#315dbb" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="342" y="928" class="small">Dashed arrows: optional Gemini calls</text>
+  <line x1="626" y1="922" x2="686" y2="922" stroke="#7149cf" stroke-width="3" stroke-dasharray="9 7" marker-end="url(#arrow-dashed)"/>
+  <text x="720" y="928" class="small">Source-dependent guidance; no device control</text>
+</svg>
